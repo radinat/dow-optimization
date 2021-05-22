@@ -4,6 +4,21 @@ Created on Sun May 16 16:47:38 2021
 
 @author: radina
 """
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+#from pandas_datareader import data as wb  #module has to be installed
+import scipy.optimize as sco
+import scipy.interpolate as sci
+import sys
+import seaborn as sns
+# set print options
+np.set_printoptions(threshold=sys.maxsize)
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
+pd.set_option('display.width', None)
+pd.set_option('display.max_colwidth', -1)
+
 
 # Plot prices
 (data / data.iloc[0] * 100).plot(figsize=(15,10))
@@ -11,7 +26,7 @@ Created on Sun May 16 16:47:38 2021
 
 # Calculate log returns and other statistics
 rets = np.log(data / data.shift(1))
-rets_benchmark = np.log(dow / dow.shift(1))
+rets_benchmark = np.log(snp / snp.shift(1))
 
 
 plt.figure(figsize=(14, 7))
@@ -20,6 +35,7 @@ for c in rets.columns.values:
 plt.legend(loc='upper right', fontsize=12)
 plt.ylabel('daily returns')
 
+# Check metrics
 rets.mean() * 252 # 252 trading days - annualize daily returns
 rets.cov() * 252
 rets.corr()
@@ -186,6 +202,7 @@ cons = ({'type': 'eq', 'fun': lambda x: statistics(x)[0] - f(opt[2])},
 {'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
 res = sco.minimize(min_func_port, noa * [1. / noa,], method='SLSQP',
 bounds=bnds, constraints=cons)
+# optimal portfolio weights print
 res['x'].round(3)
 # Check statistics
 statistics(res['x'].round(3))
@@ -202,6 +219,7 @@ optPort_ret = (rets * res['x']).sum(axis = 1)
 optPort_ret=optPort_ret.iloc[1:]
 rets_benchmark=rets_benchmark.iloc[1:]
 
+# plot optimal portfolio returns vs benchmark returns
 sns.regplot(rets_benchmark.values,
 optPort_ret.values)
 plt.xlabel("Benchmark Returns")
@@ -212,12 +230,13 @@ plt.show()
 #We can see that our portfolio returns are highly correlated to the benchmark returns. 
 #We can use the regression model to calculate the portfolio beta and the portfolio alpha. 
 #We will us the linear regression model to calculate the alpha and the beta.
+from scipy import stats
 benchmark_ret = rets_benchmark.squeeze()
 (beta, alpha) = stats.linregress(benchmark_ret.values,
                 optPort_ret.values)[0:2]
 
-                
-print("The portfolio beta is", round(beta, 4)) #0.9311
+#print beta
+print("The portfolio beta is", round(beta, 4)) #0.9016
 #We can see that this portfolio had a negative alpha. 
 #The portfolio beta was 0.93. 
 #This suggests that for every +1% move in the S&P 500 our portfolio will go up 0.93% in value.
