@@ -6,6 +6,8 @@ Created on Sun May 16 16:49:13 2021
 """
 
 # PCA 
+# https://thequantmba.wordpress.com/2017/01/24/principal-component-analysis-of-equity-returns-in-python/?fbclid=IwAR0m7eKN4DP8jQZBLRBXJHPyTi32oV57nXMlIq77jHMNE5yRMHXZZPR1lEY
+
 from sklearn.decomposition import PCA 
 import numpy as np
 import pandas as pd
