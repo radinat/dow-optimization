@@ -6,7 +6,6 @@ Created on Sun May 16 16:49:13 2021
 """
  
 # PCA 
-# https://thequantmba.wordpress.com/2017/01/24/principal-component-analysis-of-equity-returns-in-python/?fbclid=IwAR0m7eKN4DP8jQZBLRBXJHPyTi32oV57nXMlIq77jHMNE5yRMHXZZPR1lEY
 
 from sklearn.decomposition import PCA 
 import numpy as np
@@ -45,12 +44,6 @@ data = data.rename(columns={'GC=F': 'GOLD'})
 #change index types to datetime
 data.index=data.index.astype('datetime64[ns]')
 snp.index=snp.index.astype('datetime64[ns]')
-
-# get cumulative total return index normalized at 1
-#indu_index_ret = snp.pct_change()
-#indu_ret_idx = indu_index_ret[1:]+1
-#indu_ret_idx= indu_ret_idx.cumprod()
-#indu_ret_idx.columns =['snp']
 
 indu_ret_idx = snp.pct_change()
 indu_ret_idx.columns =['snp']
@@ -101,10 +94,15 @@ pc_ret_idx['snp'] = snp['^GSPC']
 pc_ret_idx.plot(subplots=True,title ='PC portfolio vs Market',layout=[1,2],figsize=(10,5))
 
 # plot the weights in the PC
-weights_df = pd.DataFrame(data = pc_w*100,index = data.columns)
-weights_df.columns=['weights']
-weights_df.plot.bar(title='PCA portfolio weights',rot =45,fontsize =8)
+portfolio_pca = pd.DataFrame(data = pc_w*100,index = data.columns)
+portfolio_pca.columns=['weights']
+portfolio_pca.plot.bar(title='PCA portfolio weights',rot =45,fontsize =8)
 
+portfolio_pca=portfolio_pca.drop("GOLD")
+
+fig = plt.figure(figsize =(10, 7))
+plt.pie(portfolio_pca['weights'], labels = portfolio_pca.index, autopct='%1.1f%%', startangle = 90)
+plt.show() 
 # a function for major portfolio statistics
 def statistics(weights):
  weights = np.array(weights)
@@ -112,20 +110,40 @@ def statistics(weights):
  pvol = np.sqrt(np.dot(weights.T, np.dot(rets.cov() * 252, weights)))
  return np.array([pret, pvol, pret / pvol])
 #check statistics
-weights_arr=weights_df.to_numpy()
+portfolio_pca = pd.DataFrame(data = pc_w*100,index = data.columns)
+portfolio_pca.columns=['weights']
+
+weights_arr=portfolio_pca['weights'].to_numpy()
 weights_arr=weights_arr.ravel()
 weights_arr=weights_arr/100
-statistics(weights_arr.round(3))
+pca_stat=statistics(weights_arr.round(3))
+pca_stat
+#compare to Monte Carlo portfolio
+n_groups = 3
+# create plot
+fig, ax = plt.subplots()
+index = np.arange(n_groups)
+bar_width = 0.35
+opacity = 0.8
+# monte carlo in blue
+rects1 = plt.bar(index, mc_stat, bar_width,
+alpha=opacity,
+color='b',
+label='Frank')
+#pca in green
+rects2 = plt.bar(index + bar_width, pca_stat, bar_width,
+alpha=opacity,
+color='g',
+label='Guido')
 
-# Compare portfolio to benchmark returns
-# transform to array
-#weights_arr=weights_df.to_numpy()
-#weights_arr=weights_arr.ravel()
-#weights_arr=weights_df.to_numpy()
+plt.title('Monte Carlo and PCA Optimization Statistics')
+plt.xticks(index + bar_width, ('Expected return', 'Expected variance', 'Sharpe ratio'))
+plt.tight_layout()
+plt.show()
+
 #calculate optimal portfolio returns
 optPortPC_ret = (rets * weights_arr).sum(axis = 1)
-#optPortPC_ret=optPortPC_ret.iloc[1:]
-#rets_benchmark=rets_benchmark.iloc[1:]
+
 
 import seaborn as sns
 # plot optimal portfolio returns vs benchmark returns
@@ -147,7 +165,5 @@ optPortPC_ret=optPortPC_ret[1:]
                 optPortPC_ret.values)[0:2]
 
 #print beta
-print("The portfolio beta is", round(beta, 4)) #1.0365
-#The portfolio beta was 0.93. 
-#This suggests that for every +1% move in the S&P 500 our portfolio will go up 0.93% in value.
+print("The portfolio beta is", round(beta, 4)) 
 print("The portfolio alpha is", round(alpha,5))
