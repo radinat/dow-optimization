@@ -28,6 +28,9 @@ pd.set_option('display.max_colwidth', -1)
 rets = np.log(data / data.shift(1))
 rets_benchmark = np.log(snp / snp.shift(1))
 
+rets=rets.iloc[1:]
+rets_benchmark=rets_benchmark.iloc[1:]
+
 
 plt.figure(figsize=(14, 7))
 for c in rets.columns.values:
@@ -204,20 +207,24 @@ res = sco.minimize(min_func_port, noa * [1. / noa,], method='SLSQP',
 bounds=bnds, constraints=cons)
 # optimal portfolio weights print
 res['x'].round(3)
-# Check statistics
-statistics(res['x'].round(3))
+portfolio=pd.DataFrame()
+portfolio['assets']=data.columns
+portfolio['weights']=res['x'].round(3)
+portfolio=portfolio.drop(1)
+portfolio=portfolio.drop(2)
 
+fig = plt.figure(figsize =(10, 7))
+plt.pie(portfolio['weights'], labels = portfolio['assets'], autopct='%1.1f%%', startangle = 90)
+plt.show() 
+# Check statistics
+mc_stat=statistics(res['x'].round(3))
+mc_stat
+aa=res['x']
 
 # Alpha and Beta
-# https://www.codingfinance.com/post/2018-04-25-portfolio-beta-py/
-# Let us now calculate the Returns of our optimal portfolio. Assuming a risk-free monthly rate of 0.2%, Let
-#us calculate the Alpha and Beta of our trading strategy. Alpha indicates how much our trading portfolio
-#outperforms the market (S&P 500) and Beta indicates the strength of the correlation between our trading
-#portfolio and the market (S&P 500). (i.e: Returns of our portfolio = Alpha + Beta * (Returns of market) )
 
 optPort_ret = (rets * res['x']).sum(axis = 1)
-optPort_ret=optPort_ret.iloc[1:]
-rets_benchmark=rets_benchmark.iloc[1:]
+
 
 # plot optimal portfolio returns vs benchmark returns
 sns.regplot(rets_benchmark.values,
@@ -237,7 +244,4 @@ benchmark_ret = rets_benchmark.squeeze()
 
 #print beta
 print("The portfolio beta is", round(beta, 4)) #0.9016
-#We can see that this portfolio had a negative alpha. 
-#The portfolio beta was 0.93. 
-#This suggests that for every +1% move in the S&P 500 our portfolio will go up 0.93% in value.
 print("The portfolio alpha is", round(alpha,5))
